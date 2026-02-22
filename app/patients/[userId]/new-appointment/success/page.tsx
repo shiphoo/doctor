@@ -40,7 +40,7 @@ const Success = async ({
 
 					<h2 className='header mb-6 max-w-[600px] text-center'>
 						Your <span className='text-green-500'>appointment request</span> has
-						been successfullys submitted!
+						been successfully submitted!
 					</h2>
 					<p>We will be in touch shortly to confirm.</p>
 				</section>
