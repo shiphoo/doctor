@@ -8,7 +8,7 @@ import SubmitButton from "../SubmitButton";
 import { useState } from "react";
 import { UserFormValidation } from "../../lib/validation";
 import { useRouter } from "next/navigation";
-import { createuser } from "@/lib/actions/patient.actions";
+import { createuser, getPatient } from "@/lib/actions/patient.actions";
 
 export enum FormFieldType {
 	INPUT = "input",
@@ -40,15 +40,25 @@ const PatientForm = () => {
 		setIsLoading(true);
 
 		try {
-			const userData = {
-				name,
-				email,
-				phone,
-			};
-			const user = await createuser(userData);
-			if (user) router.push(`/patients/${user.$id}/register`);
+			// 1️⃣ Create user or get existing one
+			const user = await createuser({ name, email, phone });
+
+			if (!user) return;
+
+			// 2️⃣ Check if patient already exists
+			const existingPatient = await getPatient(user.$id);
+
+			if (existingPatient) {
+				// ✅ Patient already exists → go to appointment
+				router.push(`/patients/${user.$id}/new-appointment`);
+			} else {
+				// ✅ No patient yet → go to register
+				router.push(`/patients/${user.$id}/register`);
+			}
 		} catch (error) {
 			console.log("Submission error:", error);
+		} finally {
+			setIsLoading(false);
 		}
 	}
 	return (

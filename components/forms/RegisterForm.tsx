@@ -32,9 +32,9 @@ const RegisterForm = ({ user }: { user: User }) => {
 	const form = useForm<z.infer<typeof PatientFormValidation>>({
 		defaultValues: {
 			...PatientFormDefaultValues,
-			name: "",
-			email: "",
-			phone: "",
+			name: user.name || "",
+			email: user.email || "",
+			phone: user.phone || "",
 		},
 		resolver: zodResolver(PatientFormValidation),
 	});
@@ -66,17 +66,6 @@ const RegisterForm = ({ user }: { user: User }) => {
 		} catch (error) {
 			console.log("Submission error", error);
 		}
-		try {
-			const userData = {
-				name,
-				email,
-				phone,
-			};
-			const user = await createuser(userData);
-			if (user) router.push(`/patients/${user.$id}/register`);
-		} catch (error) {
-			console.log("Submission error:", error);
-		}
 	}
 	return (
 		<form onSubmit={form.handleSubmit(onSubmit)} className='space-y-12 flex-1'>
@@ -98,6 +87,7 @@ const RegisterForm = ({ user }: { user: User }) => {
 					placeholder='Faig Hajili'
 					iconSrc='/assets/icons/user.svg'
 					iconAlt='user'
+					disabled
 				/>
 				<div className='flex flex-col gap-6 xl:flex-row'>
 					<CustomFormField
@@ -108,6 +98,7 @@ const RegisterForm = ({ user }: { user: User }) => {
 						placeholder='faighajili@gmail.com'
 						iconSrc='/assets/icons/email.svg'
 						iconAlt='email'
+						disabled
 					/>
 					<CustomFormField
 						fieldType={FormFieldType.PHONE_INPUT}
@@ -115,6 +106,7 @@ const RegisterForm = ({ user }: { user: User }) => {
 						name='phone'
 						label='Phone number'
 						placeholder='(55) 555-55-55'
+						disabled
 					/>
 				</div>
 				<div className='flex flex-col gap-6 xl:flex-row'>

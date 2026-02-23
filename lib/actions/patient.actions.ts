@@ -21,17 +21,23 @@ export const createuser = async (user: CreateUserParams) => {
 			user.email,
 			user.phone,
 			undefined,
-			user.name
+			user.name,
 		);
+
 		return newUser;
 	} catch (error: any) {
-		if (error && error?.code === 409) {
-			const documents = await users.list([Query.equal("email", [user.email])]);
-			return documents?.users[0];
+		if (error?.code === 409) {
+			// User already exists → fetch existing user
+			const existingUsers = await users.list([
+				Query.equal("email", [user.email]),
+			]);
+
+			return existingUsers?.users[0];
 		}
+
+		throw error;
 	}
 };
-
 export const getUser = async (userId: string) => {
 	try {
 		const user = await users.get(userId);
@@ -45,11 +51,17 @@ export const getPatient = async (userId: string) => {
 		const patients = await databases.listDocuments(
 			DATABASE_ID!,
 			PATIENT_TABLE_ID!,
-			[Query.equal("userId", userId)]
+			[Query.equal("userId", userId)],
 		);
-		return parseStringify(patients.documents[0]);
+
+		const patient = patients.documents[0];
+
+		if (!patient) return null; // 🔥 FIX HERE
+
+		return parseStringify(patient);
 	} catch (error) {
 		console.log("Error fetching user:", error);
+		return null;
 	}
 };
 
@@ -62,7 +74,7 @@ export const registerPatient = async ({
 		if (identificationDocument) {
 			const inputFile = InputFile.fromBuffer(
 				identificationDocument?.get("blobFile") as Blob,
-				identificationDocument?.get("fileName") as string
+				identificationDocument?.get("fileName") as string,
 			);
 
 			file = await storage.createFile(BUCKET_ID!, ID.unique(), inputFile);
@@ -75,7 +87,7 @@ export const registerPatient = async ({
 				// identificationDocumentId: file?.$id || null,
 				// identificationDocumentUrl: `${ENDPOINT}/storage/buckets/${BUCKET_ID}/files/${file?.$id}/view?project=${PROJECT_ID}`,
 				...patient,
-			}
+			},
 		);
 		return parseStringify(newPatient);
 	} catch (error) {
