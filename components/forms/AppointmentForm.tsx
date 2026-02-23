@@ -79,7 +79,7 @@ const AppointmentForm = ({
 				if (appointment) {
 					form.reset();
 					router.push(
-						`/patients/${userId}/new-appointment/success?appointmentId=${appointment.$id}`
+						`/patients/${userId}/new-appointment/success?appointmentId=${appointment.$id}`,
 					);
 				}
 			} else {
@@ -162,6 +162,8 @@ const AppointmentForm = ({
 						label='Expected appointment date'
 						showTimeSelect
 						dateFormat='MM/dd/yyyy - h:mm aa'
+						minDate={new Date()} // ❌ block past days
+						restrictPastTime // ❌ block past time today
 					/>
 					<div className='flex flex-col gap-6 xl:flex-row'>
 						<CustomFormField

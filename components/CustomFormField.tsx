@@ -24,6 +24,8 @@ interface CustomProps {
 	disabled?: boolean;
 	dateFormat?: string;
 	showTimeSelect?: boolean;
+	minDate?: Date; // ✅ optional minDate
+	restrictPastTime?: boolean; // ✅ restrict past time for today
 	children?: React.ReactNode;
 	renderSkeleton?: (field: any) => React.ReactNode;
 }
@@ -38,6 +40,8 @@ const RenderField = ({ field, props }: { field: any; props: CustomProps }) => {
 		dateFormat,
 		renderSkeleton,
 		disabled,
+		minDate,
+		restrictPastTime,
 	} = props;
 
 	switch (fieldType) {
@@ -88,6 +92,12 @@ const RenderField = ({ field, props }: { field: any; props: CustomProps }) => {
 			);
 
 		case FormFieldType.DATE_PICKER:
+			// ✅ Determine if selected date is today
+			const selectedDate = field.value ? new Date(field.value) : null;
+			const today = new Date();
+			const isToday =
+				selectedDate && selectedDate.toDateString() === today.toDateString();
+
 			return (
 				<div className='flex rounded-md border border-dark-500 bg-dark-400'>
 					<Image
@@ -106,6 +116,11 @@ const RenderField = ({ field, props }: { field: any; props: CustomProps }) => {
 						selected={field.value}
 						onChange={(date) => field.onChange(date)}
 						disabled={disabled}
+						minDate={minDate}
+						minTime={
+							restrictPastTime && isToday ? new Date() : new Date(0, 0, 0, 0, 0)
+						}
+						maxTime={new Date(0, 0, 0, 23, 59)} // always defined
 					/>
 				</div>
 			);
