@@ -35,17 +35,20 @@ export const sendWhatsappMessage = async (
 		const controller = new AbortController();
 		const timeout = setTimeout(() => controller.abort(), 5000);
 
-		const response = await fetch("http://192.168.1.38:80/messages/message", {
-			method: "POST",
-			headers: {
-				"Content-Type": "application/json",
+		const response = await fetch(
+			"https://unrespectable-ashleigh-abstainedly.ngrok-free.dev/messages/message",
+			{
+				method: "POST",
+				headers: {
+					"Content-Type": "application/json",
+				},
+				body: JSON.stringify({
+					phoneNumber,
+					message: content,
+				}),
+				signal: controller.signal,
 			},
-			body: JSON.stringify({
-				phoneNumber,
-				message: content,
-			}),
-			signal: controller.signal,
-		});
+		);
 
 		clearTimeout(timeout);
 
