@@ -9,16 +9,67 @@ import {
 import { parseStringify } from "../utils";
 import { ca } from "zod/v4/locales";
 import { Appointment } from "@/types/appwrite";
+import { NextRequest, NextResponse } from "next/server";
+export const sendWhatsappMessage = async (
+	to: string,
+	content: string,
+): Promise<boolean> => {
+	try {
+		if (!to) {
+			console.log("couldnt do it");
+			return false;
+		}
+
+		// Remove + and spaces
+		const cleaned = to.replace(/\+/g, "").replace(/\s/g, "").trim();
+
+		// Basic validation (Azerbaijan example: 994XXXXXXXXX)
+		if (!/^994\d{9}$/.test(cleaned)) {
+			console.log("couldnt do it");
+			return false;
+		}
+
+		const phoneNumber = `${cleaned}@c.us`;
+
+		// Add timeout protection (5 seconds)
+		const controller = new AbortController();
+		const timeout = setTimeout(() => controller.abort(), 5000);
+
+		const response = await fetch("http://192.168.1.38:80/messages/message", {
+			method: "POST",
+			headers: {
+				"Content-Type": "application/json",
+			},
+			body: JSON.stringify({
+				phoneNumber,
+				message: content,
+			}),
+			signal: controller.signal,
+		});
+
+		clearTimeout(timeout);
+
+		if (!response.ok) {
+			console.log("couldnt do it");
+			return false;
+		}
+
+		return true; // success
+	} catch (error) {
+		console.log("couldnt do it");
+		return false; // NEVER throw
+	}
+};
 
 export const createAppointment = async (
-	appointment: CreateAppointmentParams
+	appointment: CreateAppointmentParams,
 ) => {
 	try {
 		const newAppointment = await databases.createDocument(
 			DATABASE_ID!,
 			APPOINTMENT_TABLE_ID!,
 			ID.unique(),
-			appointment
+			appointment,
 		);
 		return parseStringify(newAppointment);
 	} catch (error) {
@@ -31,7 +82,7 @@ export const getAppointment = async (appointmentId: string) => {
 		const appointment = await databases.getDocument(
 			DATABASE_ID!,
 			APPOINTMENT_TABLE_ID!,
-			appointmentId
+			appointmentId,
 		);
 		return parseStringify(appointment);
 	} catch (error) {
@@ -41,13 +92,14 @@ export const getAppointment = async (appointmentId: string) => {
 
 import { getPatient } from "./patient.actions"; // make sure path is correct
 import { revalidatePath } from "next/cache";
+import { send } from "process";
 
 export const getRecentAppointmentList = async () => {
 	try {
 		const appointments = await databases.listDocuments(
 			DATABASE_ID!,
 			APPOINTMENT_TABLE_ID!,
-			[Query.orderDesc("$createdAt")]
+			[Query.orderDesc("$createdAt")],
 		);
 
 		const initialCounts = {
@@ -71,7 +123,7 @@ export const getRecentAppointmentList = async () => {
 				}
 				return acc;
 			},
-			initialCounts
+			initialCounts,
 		);
 
 		// Fetch patient for each appointment in parallel
@@ -82,7 +134,7 @@ export const getRecentAppointmentList = async () => {
 					...appointment,
 					patient, // add full patient object here
 				};
-			})
+			}),
 		);
 
 		const data = {
@@ -95,7 +147,7 @@ export const getRecentAppointmentList = async () => {
 	} catch (error) {
 		console.error(
 			"An error occurred while retrieving the recent appointments:",
-			error
+			error,
 		);
 	}
 };
@@ -111,92 +163,36 @@ export const updateAppointment = async ({
 			DATABASE_ID!,
 			APPOINTMENT_TABLE_ID!,
 			appointmentId,
-			appointment
+			appointment,
 		);
 		if (!updateAppointment) {
 			throw new Error("Failed to update appointment");
 		}
-		//sms notification logic can be added here
-		if (type === "schedule") {
-			const patient = await getPatient(userId);
+		const patient = await getPatient(userId);
 
-			const dateObj = new Date(updateAppointment.schedule);
+		const dateObj = new Date(updateAppointment.schedule);
 
-			const formattedDate = dateObj.toLocaleDateString("en-US", {
-				year: "numeric",
-				month: "long",
-				day: "numeric",
-			});
+		const formattedDate = dateObj.toLocaleDateString("en-US", {
+			year: "numeric",
+			month: "long",
+			day: "numeric",
+		});
 
-			const formattedTime = dateObj.toLocaleTimeString("en-US", {
-				hour: "2-digit",
-				minute: "2-digit",
-			});
-
-			await sendWhatsAppTemplate({
-				to: "994705085021",
-				templateName: "appointment_confirmed",
-				params: [
-					patient.name, // {{1}}
-					updateAppointment.primaryPhysician, // {{2}}
-					formattedDate, // {{3}}
-					formattedTime, // {{4}}
-				],
-			});
+		const formattedTime = dateObj.toLocaleTimeString("en-US", {
+			hour: "2-digit",
+			minute: "2-digit",
+		});
+		const smsContent = `Hello, ${
+			type === "schedule"
+				? `Your appointment has been scheduled for ${formattedDate} at ${formattedTime}.`
+				: `We are sorry to inform you that your appointment scheduled for ${formattedDate} at ${formattedTime} has been cancelled. Reason: ${appointment.cancellationReason || "Not specified"}.`
 		}
+		 `;
+
+		await sendWhatsappMessage(patient.phone, smsContent);
 		revalidatePath(`/admin`);
 		return parseStringify(updateAppointment);
 	} catch (error) {
 		console.log(error);
-	}
-};
-export const sendWhatsAppTemplate = async ({
-	to,
-	templateName,
-	params,
-}: {
-	to: string;
-	templateName: string;
-	params: string[];
-}) => {
-	try {
-		const res = await fetch(
-			"https://graph.facebook.com/v22.0/846086671930463/messages",
-			{
-				method: "POST",
-				headers: {
-					Authorization: `Bearer ${process.env.WHATSAPP_ACCESS_TOKEN}`,
-					"Content-Type": "application/json",
-				},
-				body: JSON.stringify({
-					messaging_product: "whatsapp",
-					to,
-					type: "template",
-					template: {
-						name: templateName,
-						language: { code: "en_US" },
-						components: [
-							{
-								type: "body",
-								parameters: params.map((text) => ({
-									type: "text",
-									text,
-								})),
-							},
-						],
-					},
-				}),
-			}
-		);
-
-		const data = await res.json();
-
-		if (!res.ok) {
-			throw new Error(data.error?.message || "WhatsApp API error");
-		}
-
-		return data;
-	} catch (error) {
-		console.error("WhatsApp send failed:", error);
 	}
 };
