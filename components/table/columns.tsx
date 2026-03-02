@@ -24,6 +24,14 @@ export const columns: ColumnDef<Appointment>[] = [
 		},
 	},
 	{
+		accessorKey: "phone",
+		header: "Phone",
+		cell: ({ row }) => {
+			// Assuming patient object has a phone field
+			return <p className='text-14-regular'>{row.original.patient.phone}</p>;
+		},
+	},
+	{
 		accessorKey: "status",
 		header: "Status",
 		cell: ({ row }) => (
@@ -46,7 +54,7 @@ export const columns: ColumnDef<Appointment>[] = [
 		header: () => "Doctor",
 		cell: ({ row }) => {
 			const doctor = Doctors.find(
-				(doc) => doc.name === row.original.primaryPhysician
+				(doc) => doc.name === row.original.primaryPhysician,
 			);
 			return (
 				<div className='flex items-center gap-3'>
@@ -57,7 +65,6 @@ export const columns: ColumnDef<Appointment>[] = [
 						height={100}
 						className='size-8'
 					/>
-
 					<p className='whitespace-nowrap'>Dr. {doctor?.name}</p>
 				</div>
 			);
