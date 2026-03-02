@@ -6,7 +6,6 @@ import { FormFieldType } from "./forms/PatientForm";
 import Image from "next/image";
 import "react-phone-number-input/style.css";
 import PhoneInput from "react-phone-number-input";
-import type { E164Number } from "libphonenumber-js";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { Select, SelectContent, SelectTrigger, SelectValue } from "./ui/select";
@@ -24,8 +23,9 @@ interface CustomProps {
 	disabled?: boolean;
 	dateFormat?: string;
 	showTimeSelect?: boolean;
-	minDate?: Date; // ✅ optional minDate
-	restrictPastTime?: boolean; // ✅ restrict past time for today
+	minDate?: Date;
+	restrictPastTime?: boolean;
+	isBirthDate?: boolean; // ✅ added
 	children?: React.ReactNode;
 	renderSkeleton?: (field: any) => React.ReactNode;
 }
@@ -42,6 +42,7 @@ const RenderField = ({ field, props }: { field: any; props: CustomProps }) => {
 		disabled,
 		minDate,
 		restrictPastTime,
+		isBirthDate,
 	} = props;
 
 	switch (fieldType) {
@@ -81,18 +82,17 @@ const RenderField = ({ field, props }: { field: any; props: CustomProps }) => {
 			return (
 				<PhoneInput
 					defaultCountry='AZ'
-					placeholder={placeholder}
 					international
-					withCountryCallingCode
-					value={field.value as E164Number | undefined}
-					onChange={field.onChange}
+					countryCallingCodeEditable={false}
+					placeholder={placeholder}
+					value={field.value || undefined}
+					onChange={(value) => field.onChange(value ?? "")}
 					disabled={disabled}
 					className='input-phone'
 				/>
 			);
 
 		case FormFieldType.DATE_PICKER:
-			// ✅ Determine if selected date is today
 			const selectedDate = field.value ? new Date(field.value) : null;
 			const today = new Date();
 			const isToday =
@@ -110,17 +110,23 @@ const RenderField = ({ field, props }: { field: any; props: CustomProps }) => {
 
 					<DatePicker
 						dateFormat={dateFormat || "MM/dd/yyyy"}
-						showTimeSelect={showTimeSelect || false}
-						timeInputLabel='Time:'
-						wrapperClassName='date-picker'
 						selected={field.value}
 						onChange={(date) => field.onChange(date)}
 						disabled={disabled}
-						minDate={minDate}
+						showTimeSelect={!isBirthDate && (showTimeSelect || false)}
+						minDate={!isBirthDate ? minDate : undefined}
 						minTime={
-							restrictPastTime && isToday ? new Date() : new Date(0, 0, 0, 0, 0)
+							!isBirthDate && restrictPastTime && isToday
+								? new Date()
+								: new Date(0, 0, 0, 0, 0)
 						}
-						maxTime={new Date(0, 0, 0, 23, 59)} // always defined
+						maxTime={!isBirthDate ? new Date(0, 0, 0, 23, 59) : undefined}
+						showMonthDropdown={isBirthDate}
+						showYearDropdown={isBirthDate}
+						dropdownMode={isBirthDate ? "select" : undefined}
+						scrollableYearDropdown={isBirthDate}
+						yearDropdownItemNumber={isBirthDate ? 100 : undefined}
+						maxDate={isBirthDate ? new Date() : undefined}
 					/>
 				</div>
 			);

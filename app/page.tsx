@@ -12,16 +12,9 @@ export default async function Home({ searchParams }: SearchParamProps) {
 			{isAdmin && <PasskeyModal />}
 			<section className='remove-scrollbar container my-auto'>
 				<div className='sub-container max-w-[496px]'>
-					<Image
-						src='/assets/icons/logo-full.svg'
-						height={1000}
-						width={1000}
-						alt='patinet'
-						className='mb-12 h-10 w-fit'
-					/>
 					<PatientForm />
 					<div className='text-14-regular flex justify-between'>
-						<p className='copyright py-12'>© 2025 Faig Hajili</p>
+						<p className='copyright py-12'>© 2026 Faig Hajili</p>
 
 						<Link href='/?admin=true' className='text-green-500 py-12'>
 							Admin

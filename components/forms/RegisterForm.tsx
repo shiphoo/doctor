@@ -6,20 +6,12 @@ import { FieldGroup } from "../ui/field";
 import CustomFormField from "../CustomFormField";
 import SubmitButton from "../SubmitButton";
 import { useState } from "react";
-import {
-	PatientFormValidation,
-	UserFormValidation,
-} from "../../lib/validation";
+import { PatientFormValidation } from "../../lib/validation";
 import { useRouter } from "next/navigation";
-import { createuser, registerPatient } from "@/lib/actions/patient.actions";
+import { registerPatient } from "@/lib/actions/patient.actions";
 import { FormFieldType } from "./PatientForm";
 import { RadioGroup } from "@radix-ui/react-radio-group";
-import {
-	Doctors,
-	GenderOptions,
-	IdentificationTypes,
-	PatientFormDefaultValues,
-} from "@/constants";
+import { Doctors, GenderOptions, PatientFormDefaultValues } from "@/constants";
 import { Label } from "../ui/label";
 import { RadioGroupItem } from "../ui/radio-group";
 import { SelectItem } from "../ui/select";
@@ -115,6 +107,7 @@ const RegisterForm = ({ user }: { user: User }) => {
 						control={form.control}
 						name='birthDate'
 						label='Date of Birth'
+						isBirthDate
 					/>
 					<CustomFormField
 						fieldType={FormFieldType.SKELETON}
@@ -281,13 +274,13 @@ const RegisterForm = ({ user }: { user: User }) => {
 					fieldType={FormFieldType.CHECKBOX}
 					control={form.control}
 					name='disclosureConsent'
-					label='bla bla bla'
+					label='I consent to the disclosure of my health information'
 				/>
 				<CustomFormField
 					fieldType={FormFieldType.CHECKBOX}
 					control={form.control}
 					name='privacyConsent'
-					label='bla2 bla2 bla2'
+					label='I consent to the collection and use of my personal data as described in the privacy policy'
 				/>
 				<SubmitButton isLoading={isLoading}>Get Started</SubmitButton>
 			</FieldGroup>

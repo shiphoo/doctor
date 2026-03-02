@@ -5,30 +5,28 @@ import { formatDateTime } from "@/lib/utils";
 import Image from "next/image";
 import Link from "next/link";
 
-const Success = async ({
-	params: { userId },
-	searchParams,
-}: SearchParamProps) => {
-	const params = await searchParams;
-	const appointmentId = (params?.appointmentId as string) || "";
-	console.log(appointmentId);
+const Success = async ({ params, searchParams }: SearchParamProps) => {
+	const { userId } = await params;
+
+	const awaitedSearchParams = await searchParams;
+	const appointmentId = (awaitedSearchParams?.appointmentId as string) || "";
 
 	const appointment = await getAppointment(appointmentId);
 	const doctor = Doctors.find(
-		(doc) => doc.name === appointment.primaryPhysician
+		(doc) => doc.name === appointment.primaryPhysician,
 	);
 	console.log(doctor);
 	return (
 		<div className='flex h-sceen max-h-screen px-[5%]'>
 			<div className='success-img'>
 				<Link href='/'>
-					<Image
+					{/* <Image
 						src='/assets/icons/logo-full.svg'
 						height={1000}
 						width={1000}
 						alt='logo'
 						className='h-10 w-fit'
-					/>
+					/> */}
 				</Link>
 				<section className='flex flex-col items-center'>
 					<Image
@@ -71,7 +69,7 @@ const Success = async ({
 						New Appointment
 					</Link>
 				</Button>
-				<p className='copyright'>© 2025 Faig Hajili</p>
+				<p className='copyright'>© 2026 Faig Hajili</p>
 			</div>
 		</div>
 	);

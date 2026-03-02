@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { isValidPhoneNumber } from "react-phone-number-input";
 
 export const UserFormValidation = z.object({
 	name: z
@@ -8,7 +9,10 @@ export const UserFormValidation = z.object({
 	email: z.string().email("Invalid email address"),
 	phone: z
 		.string()
-		.refine((phone) => /^\+\d{10,15}$/.test(phone), "Invalid phone number"),
+		.min(1, "Phone number is required")
+		.refine((value) => isValidPhoneNumber(value), {
+			message: "Enter a valid phone number",
+		}),
 });
 
 export const PatientFormValidation = z.object({
